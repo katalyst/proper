@@ -4,10 +4,10 @@
 //     http://github.com/michael/proper
 
 (function(){
-  
+
   // _.Events (borrowed from Backbone.js)
   // -----------------
-  
+
   // A module that can be mixed in to *any object* in order to provide it with
   // custom events. You may `bind` or `unbind` a callback function to an event;
   // `trigger`-ing an event fires all callbacks in succession.
@@ -17,7 +17,7 @@
   //     object.bind('expand', function(){ alert('expanded'); });
   //     object.trigger('expand');
   //
-  
+
   _.Events = window.Backbone ? Backbone.Events : {
 
     // Bind an event, specified by a string name, `ev`, to a `callback` function.
@@ -95,33 +95,26 @@
     <div class="proper-commands"> \
       <a href="#" title="Emphasis" class="command em" command="em"><div>Emphasis</div></a> \
       <a href="#" title="Strong" class="command strong" command="strong"><div>Strong</div></a> \
-      <a href="#" title="Code" class="command code" command="code"><div>Code</div></a> \
-      <div class="separator">|</div> \
-      <a href="#" title="Bullet List" class="command ul" command="ul"><div>Bullets List</div></a> \
-      <a href="#" title="Numbered List" class="command ol" command="ol"><div>Numbered List</div></a> \
-      <a href="#" title="Indent" class="command indent" command="indent"><div>Indent</div></a> \
-      <a href="#" title="Outdent" class="command outdent" command="outdent"><div>Outdent</div></a> \
-      <div class="separator">|</div> \
-      <a title="List" href="#" class="command link" command="link"><div>Link</div></a> \
+      <a href="#" title="List" class="command link" command="link"><div>Link</div></a> \
     </div> \
   ';
-  
+
   // Proper
   // -----------
-  
+
   this.Proper = function(options) {
     var activeElement = null,     // element that is being edited
         $commands,
         self = {},
         that = this,
         pendingChange = false;
-    
+
     // Setup temporary hidden DOM Node, for sanitization
     $('body').append($('<div id="proper_content"></div>').hide());
-    
+
     // Commands
     // -----------
-    
+
     var commands = {
       execEM: function() {
         document.execCommand('italic', false, true);
@@ -132,32 +125,7 @@
         document.execCommand('bold', false, true);
         return false;
       },
-      
-      execCODE: function() {
-        document.execCommand('insertHTML', false, '<code>'+window.getSelection()+'</code>');
-        return false;
-      },
 
-      execUL: function() {
-        document.execCommand('insertUnorderedList', false, null);
-        return false;
-      },
-
-      execOL: function() {
-        document.execCommand('insertOrderedList', false, null);
-        return false;
-      },
-
-      execINDENT: function() {
-        document.execCommand('indent', false, null);
-        return false;
-      },
-
-      execOUTDENT: function() {
-        document.execCommand('outdent', false, null);
-        return false;
-      },
-      
       execLINK: function() {
         document.execCommand('createLink', false, prompt('URL:'));
         return false;
@@ -167,24 +135,24 @@
         alert($(this.el).html());
       }
     };
-    
+
     // Clean up the mess produced by contenteditable
     function sanitize(element) {
       var s = new Sanitize(Sanitize.Config.BASIC);
       var content = s.clean_node(element);
       $('#proper_content').html(content);
     }
-    
+
     function semantify(element) {
       $(element).find('b').each(function() {
         $(this).replaceWith($('<strong>').html($(this).html()));
       });
-      
+
       $(element).find('i').each(function() {
         $(this).replaceWith($('<em>').html($(this).html()));
       });
     }
-    
+
     function bindEvents(el) {
       $(el).bind('paste', function() {
         // Immediately sanitize pasted content
@@ -193,7 +161,7 @@
           $(el).html($('#proper_content').html());
         }, 10);
       });
-      
+
       $(el).bind('keyup', function() {
         // Trigger change events, but consolidate them to 200ms time slices
         setTimeout(function() {
@@ -202,20 +170,20 @@
             pendingChange = true;
             setTimeout(function() {
               pendingChange = false;
-              
+
               // Sanitize on every keystroke
               sanitize($(activeElement)[0]);
               semantify($('#proper_content')[0]);
-              
+
               self.trigger('changed');
             }, 200);
           }
         }, 10);
-        
+
         return true;
       });
     }
-    
+
     // Instance methods
     // -----------
 
@@ -225,37 +193,37 @@
       $controls.hide();
       self.unbind('changed');
     };
-    
+
     // Activate editor for a given element
     self.activate = function(el) {
-      
+
       if (el !== activeElement) {
         // Deactivate previously active element
         self.deactivate();
-        
+
         // Make editable
         $(el).attr('contenteditable', true);
         activeElement = el;
         bindEvents(el);
-        
+
         // Show and reposition controls
-        
+
         // Init sanitized content
         $('#proper_content').html($(el).html());
-        
+
         $controls.insertBefore(el);
         $controls.show();
       }
     };
-    
+
     // Get current content
     self.content = function() {
       return activeElement ? $('#proper_content').html() : '';
     };
-    
+
     $controls = $(controlsTpl),                // the controls panel
     $controls.prependTo($('body')).hide();
-    
+
     // Bind events for controls
     $('.proper-commands a.command').click(function(e) {
       commands['exec'+ $(e.currentTarget).attr('command').toUpperCase()]();
@@ -263,19 +231,19 @@
       setTimeout(function() {
         sanitize($(activeElement)[0]);
         semantify($('#proper_content')[0]);
-        
+
         self.trigger('changed');
       }, 10);
-      
+
       return false;
     });
-    
+
 
     // Expose public API
     // -----------
-    
+
     _.extend(self, _.Events);
     return self;
   };
-  
+
 })();
